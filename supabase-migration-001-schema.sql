@@ -1,9 +1,9 @@
 -- ============================================================
--- Winter's Menu – Supabase Postgres Schema
--- Run this in your Supabase SQL Editor
+-- Migration 001: Winter's Menu – Full Schema
+-- Run this FIRST in Supabase SQL Editor
 -- ============================================================
 
--- 1. Profiles (extends auth.users)
+-- 1. Profiles
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text,
@@ -17,10 +17,8 @@ alter table public.profiles enable row level security;
 
 create policy "Users can view own profile"
   on public.profiles for select using (auth.uid() = id);
-
 create policy "Users can update own profile"
   on public.profiles for update using (auth.uid() = id);
-
 create policy "Users can insert own profile"
   on public.profiles for insert with check (auth.uid() = id);
 
@@ -41,6 +39,7 @@ create trigger on_auth_user_created
 -- 2. Recipes
 create table public.recipes (
   id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
   title text not null,
   description text,
   image_url text,
@@ -55,35 +54,33 @@ create table public.recipes (
 );
 
 alter table public.recipes enable row level security;
-
 create policy "Recipes are publicly readable"
   on public.recipes for select using (true);
 
 -- 3. Ingredients
 create table public.ingredients (
   id uuid primary key default gen_random_uuid(),
-  name text not null,
+  name text not null unique,
   default_unit text not null default 'g',
   category text not null check (category in ('groente','fruit','vlees_vis','zuivel','kruiden','droog','overig')),
   image_url text
 );
 
 alter table public.ingredients enable row level security;
-
 create policy "Ingredients are publicly readable"
   on public.ingredients for select using (true);
 
--- 4. Recipe ↔ Ingredients junction
+-- 4. Recipe ↔ Ingredients
 create table public.recipe_ingredients (
   id uuid primary key default gen_random_uuid(),
   recipe_id uuid not null references public.recipes(id) on delete cascade,
   ingredient_id uuid not null references public.ingredients(id) on delete cascade,
   amount numeric not null default 0,
-  unit text not null default 'g'
+  unit text not null default 'g',
+  sort_order int default 0
 );
 
 alter table public.recipe_ingredients enable row level security;
-
 create policy "Recipe ingredients are publicly readable"
   on public.recipe_ingredients for select using (true);
 
@@ -96,13 +93,10 @@ create table public.favorites (
 );
 
 alter table public.favorites enable row level security;
-
 create policy "Users can view own favorites"
   on public.favorites for select using (auth.uid() = user_id);
-
 create policy "Users can insert own favorites"
   on public.favorites for insert with check (auth.uid() = user_id);
-
 create policy "Users can delete own favorites"
   on public.favorites for delete using (auth.uid() = user_id);
 
@@ -118,16 +112,12 @@ create table public.notes (
 );
 
 alter table public.notes enable row level security;
-
 create policy "Users can view own notes"
   on public.notes for select using (auth.uid() = user_id);
-
 create policy "Users can insert own notes"
   on public.notes for insert with check (auth.uid() = user_id);
-
 create policy "Users can update own notes"
   on public.notes for update using (auth.uid() = user_id);
-
 create policy "Users can delete own notes"
   on public.notes for delete using (auth.uid() = user_id);
 
@@ -141,17 +131,12 @@ create table public.shopping_lists (
 );
 
 alter table public.shopping_lists enable row level security;
-
 create policy "Users can view own shopping list"
   on public.shopping_lists for select using (auth.uid() = user_id);
-
 create policy "Users can insert own shopping list"
   on public.shopping_lists for insert with check (auth.uid() = user_id);
-
 create policy "Users can update own shopping list"
   on public.shopping_lists for update using (auth.uid() = user_id);
-
--- Allow reading shared lists by token
 create policy "Anyone can view shared list by token"
   on public.shopping_lists for select using (true);
 
@@ -167,12 +152,9 @@ create table public.shopping_list_items (
 );
 
 alter table public.shopping_list_items enable row level security;
-
 create policy "Users can manage own shopping list items"
   on public.shopping_list_items for all using (
     list_id in (select id from public.shopping_lists where user_id = auth.uid())
   );
-
--- Allow reading shared list items
 create policy "Anyone can view shared list items"
   on public.shopping_list_items for select using (true);

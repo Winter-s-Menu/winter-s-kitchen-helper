@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useState } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
+import type { Filters } from '@/components/FilterModal';
+import { emptyFilters } from '@/components/FilterModal';
 
 interface AppContextType {
   favorites: string[];
@@ -16,6 +18,10 @@ interface AppContextType {
   saveNote: (recipeId: string, text: string) => void;
   getNote: (recipeId: string) => Note | undefined;
   deleteNote: (recipeId: string) => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  filters: Filters;
+  setFilters: (f: Filters) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -24,6 +30,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useLocalStorage<string[]>('wm-favorites', []);
   const [shoppingList, setShoppingList] = useLocalStorage<ShoppingListItem[]>('wm-shopping', []);
   const [notes, setNotes] = useLocalStorage<Note[]>('wm-notes', []);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
 
   const toggleFavorite = useCallback((recipeId: string) => {
     setFavorites(prev =>
@@ -94,6 +102,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         favorites, toggleFavorite, isFavorite,
         shoppingList, addToShoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList,
         notes, saveNote, getNote, deleteNote,
+        searchQuery, setSearchQuery, filters, setFilters,
       }}
     >
       {children}

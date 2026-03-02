@@ -52,11 +52,6 @@ export default function Navbar({ searchQuery, onSearchChange, onOpenFilters }: N
             aria-label="Favorieten"
           >
             <Heart className="h-5 w-5" />
-            {favorites.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center">
-                {favorites.length}
-              </span>
-            )}
           </Link>
           <Link
             to="/boodschappenlijst"

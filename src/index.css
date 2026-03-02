@@ -10,19 +10,19 @@
     --card-foreground: 20 25% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 20 25% 12%;
-    --primary: 24 75% 50%;
+    --primary: 220 16% 22%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 35 20% 93%;
-    --secondary-foreground: 20 25% 20%;
-    --muted: 30 12% 92%;
-    --muted-foreground: 20 10% 46%;
-    --accent: 35 20% 93%;
-    --accent-foreground: 20 25% 12%;
+    --secondary: 220 10% 94%;
+    --secondary-foreground: 220 16% 20%;
+    --muted: 220 8% 92%;
+    --muted-foreground: 220 8% 46%;
+    --accent: 220 10% 94%;
+    --accent-foreground: 220 16% 22%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
-    --ring: 24 75% 50%;
+    --border: 220 10% 90%;
+    --input: 220 10% 90%;
+    --ring: 220 16% 22%;
     --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -41,27 +41,27 @@
     --card-foreground: 30 20% 92%;
     --popover: 20 18% 10%;
     --popover-foreground: 30 20% 92%;
-    --primary: 24 75% 55%;
+    --primary: 220 16% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 20 15% 15%;
-    --secondary-foreground: 30 20% 90%;
-    --muted: 20 10% 18%;
-    --muted-foreground: 20 10% 55%;
-    --accent: 20 15% 15%;
-    --accent-foreground: 30 20% 92%;
+    --secondary: 220 10% 15%;
+    --secondary-foreground: 220 10% 90%;
+    --muted: 220 8% 18%;
+    --muted-foreground: 220 8% 55%;
+    --accent: 220 10% 15%;
+    --accent-foreground: 220 10% 92%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 20 10% 18%;
-    --input: 20 10% 18%;
-    --ring: 24 75% 55%;
-    --sidebar-background: 20 15% 8%;
-    --sidebar-foreground: 30 15% 85%;
-    --sidebar-primary: 24 75% 55%;
+    --border: 220 8% 18%;
+    --input: 220 8% 18%;
+    --ring: 220 16% 35%;
+    --sidebar-background: 220 12% 8%;
+    --sidebar-foreground: 220 10% 85%;
+    --sidebar-primary: 220 16% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 10% 14%;
-    --sidebar-accent-foreground: 30 15% 85%;
-    --sidebar-border: 20 10% 15%;
-    --sidebar-ring: 24 75% 55%;
+    --sidebar-accent: 220 8% 14%;
+    --sidebar-accent-foreground: 220 10% 85%;
+    --sidebar-border: 220 8% 15%;
+    --sidebar-ring: 220 16% 35%;
   }
 }
 
@@ -79,15 +79,15 @@
 
 @layer utilities {
   .recipe-gradient-vlees {
-    background: linear-gradient(135deg, hsl(15 80% 92%), hsl(25 70% 86%));
+    background: linear-gradient(135deg, hsl(220 15% 95%), hsl(220 12% 90%));
   }
   .recipe-gradient-vis {
-    background: linear-gradient(135deg, hsl(195 65% 90%), hsl(210 60% 86%));
+    background: linear-gradient(135deg, hsl(210 18% 94%), hsl(210 15% 89%));
   }
   .recipe-gradient-vegan {
-    background: linear-gradient(135deg, hsl(140 50% 90%), hsl(155 55% 86%));
+    background: linear-gradient(135deg, hsl(160 14% 93%), hsl(160 12% 88%));
   }
   .recipe-gradient-vegetarisch {
-    background: linear-gradient(135deg, hsl(45 70% 91%), hsl(35 75% 86%));
+    background: linear-gradient(135deg, hsl(45 15% 94%), hsl(45 12% 89%));
   }
 }

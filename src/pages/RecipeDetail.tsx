@@ -88,7 +88,7 @@ export default function RecipeDetail() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-3xl px-4 -mt-6">
+      <main className="mx-auto max-w-3xl px-4 mt-6">
         {/* Actions */}
         <div className="flex gap-2 mb-6">
           <button

@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
-import FilterModal, { Filters, emptyFilters } from '@/components/FilterModal';
+import FilterModal from '@/components/FilterModal';
 import { recipes } from '@/data/recipes';
+import { useApp } from '@/context/AppContext';
 
 export default function Index() {
-  const [search, setSearch] = useState('');
+  const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters } = useApp();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
 
   const filtered = useMemo(() => {
     let list = recipes;

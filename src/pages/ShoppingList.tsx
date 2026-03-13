@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, Trash2, Check, Minus, Plus } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { CATEGORY_LABELS, type IngredientCategory } from '@/types/recipe';
 

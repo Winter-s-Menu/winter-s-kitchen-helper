@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import RecipeCard from '@/components/RecipeCard';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { recipes } from '@/data/recipes';
 
 export default function Favorites() {
   const { favorites } = useApp();
+  const { user } = useAuth();
   const favoriteRecipes = recipes.filter(r => favorites.includes(r.id));
 
   return (
@@ -21,7 +23,12 @@ export default function Favorites() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        {favoriteRecipes.length === 0 ? (
+        {!user ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground mb-4">Log in om je favorieten te zien</p>
+            <Link to="/inloggen" className="text-primary text-sm hover:underline">Inloggen</Link>
+          </div>
+        ) : favoriteRecipes.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground mb-2">Nog geen favorieten</p>
             <Link to="/" className="text-primary text-sm hover:underline">

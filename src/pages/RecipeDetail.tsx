@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock } from 'lucide-react';
 import { recipes } from '@/data/recipes';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 const gradientClass: Record<string, string> = {
@@ -23,6 +24,8 @@ export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const recipe = recipes.find(r => r.id === id);
   const { toggleFavorite, isFavorite, addToShoppingList, saveNote, getNote, deleteNote } = useApp();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [servings, setServings] = useState(recipe?.baseServings ?? 4);
   const [showNote, setShowNote] = useState(false);
   const [noteText, setNoteText] = useState('');
@@ -38,18 +41,32 @@ export default function RecipeDetail() {
     );
   }
 
+  const requireAuth = (action: () => void) => {
+    if (!user) {
+      toast('Log in om deze functie te gebruiken', {
+        action: { label: 'Inloggen', onClick: () => navigate('/inloggen') },
+      });
+      return;
+    }
+    action();
+  };
+
   const scalingFactor = servings / recipe.baseServings;
   const fav = isFavorite(recipe.id);
   const existingNote = getNote(recipe.id);
 
   const handleAddToList = () => {
-    addToShoppingList(recipe.ingredients, scalingFactor);
-    toast.success('Ingrediënten toegevoegd aan je boodschappenlijst');
+    requireAuth(() => {
+      addToShoppingList(recipe.ingredients, scalingFactor);
+      toast.success('Ingrediënten toegevoegd aan je boodschappenlijst');
+    });
   };
 
   const openNote = () => {
-    setNoteText(existingNote?.text ?? '');
-    setShowNote(true);
+    requireAuth(() => {
+      setNoteText(existingNote?.text ?? '');
+      setShowNote(true);
+    });
   };
 
   const handleSaveNote = () => {
@@ -98,7 +115,7 @@ export default function RecipeDetail() {
             <ShoppingCart className="h-4 w-4" /> Voeg toe aan lijst
           </button>
           <button
-            onClick={() => toggleFavorite(recipe.id)}
+            onClick={() => requireAuth(() => toggleFavorite(recipe.id))}
             className={`rounded-xl px-4 py-3 border transition-colors ${
               fav ? 'bg-primary/10 border-primary text-primary' : 'bg-card border-border hover:bg-secondary'
             }`}

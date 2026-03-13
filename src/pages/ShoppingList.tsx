@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Trash2, Check, Minus, Plus } from 'lucide-react';
+import { ChevronLeft, Trash2, Check, Minus, Plus, Share2, Copy } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { CATEGORY_LABELS, type IngredientCategory } from '@/types/recipe';
-
+import { toast } from 'sonner';
 
 function AmountControl({ amount, unit, onChange }: { amount: number; unit: string; onChange: (v: number) => void }) {
   const [draft, setDraft] = useState<string>(String(amount));
   const [focused, setFocused] = useState(false);
 
   const displayed = focused ? draft : String(amount);
-
   const step = amount < 1 ? 0.1 : amount < 10 ? 0.5 : 1;
 
   const commit = (val: number) => {
@@ -54,9 +54,9 @@ function AmountControl({ amount, unit, onChange }: { amount: number; unit: strin
 }
 
 export default function ShoppingList() {
-  const { shoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList } = useApp();
+  const { shoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList, shareToken } = useApp();
+  const { user } = useAuth();
 
-  // Group by category
   const grouped = shoppingList.reduce<Record<string, typeof shoppingList>>((acc, item) => {
     const cat = item.category;
     if (!acc[cat]) acc[cat] = [];
@@ -66,8 +66,36 @@ export default function ShoppingList() {
 
   const categoryOrder: IngredientCategory[] = ['groente', 'fruit', 'vlees_vis', 'zuivel', 'kruiden', 'droog', 'overig'];
   const sortedCategories = categoryOrder.filter(c => grouped[c]?.length);
-
   const checkedCount = shoppingList.filter(i => i.checked).length;
+
+  const handleShare = () => {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/gedeeld/${shareToken}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Deellink gekopieerd!');
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b">
+          <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
+            <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="h-4 w-4" /> Terug
+            </Link>
+            <h1 className="font-serif text-lg">Boodschappenlijst</h1>
+            <div className="w-16" />
+          </div>
+        </header>
+        <main className="mx-auto max-w-3xl px-4 py-6">
+          <div className="text-center py-20">
+            <p className="text-muted-foreground mb-4">Log in om je boodschappenlijst te beheren</p>
+            <Link to="/inloggen" className="text-primary text-sm hover:underline">Inloggen</Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +105,13 @@ export default function ShoppingList() {
             <ChevronLeft className="h-4 w-4" /> Terug
           </Link>
           <h1 className="font-serif text-lg">Boodschappenlijst</h1>
-          <div className="w-16" />
+          <div className="w-16 flex justify-end">
+            {shareToken && shoppingList.length > 0 && (
+              <button onClick={handleShare} className="p-2 rounded-lg hover:bg-secondary transition-colors" aria-label="Delen">
+                <Share2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -124,11 +158,7 @@ export default function ShoppingList() {
                         >
                           {item.checked && <Check className="h-3 w-3" />}
                         </button>
-                        <span
-                          className={`flex-1 text-sm ${
-                            item.checked ? 'line-through text-muted-foreground' : ''
-                          }`}
-                        >
+                        <span className={`flex-1 text-sm ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
                           {item.ingredientName}
                         </span>
                         <AmountControl

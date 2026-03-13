@@ -82,15 +82,11 @@ export default function ShoppingList() {
                         >
                           {item.ingredientName}
                         </span>
-                        <input
-                          type="number"
-                          value={item.amount}
-                          onChange={e => updateShoppingItemAmount(item.id, Number(e.target.value) || 0)}
-                          className="w-16 text-right text-sm bg-transparent outline-none text-muted-foreground rounded-md border border-transparent px-1 py-0.5 focus:border-primary/40 focus:bg-secondary transition-colors"
-                          min={0}
-                          step="any"
+                        <AmountControl
+                          amount={item.amount}
+                          unit={item.unit}
+                          onChange={(val) => updateShoppingItemAmount(item.id, val)}
                         />
-                        <span className="text-xs text-muted-foreground w-12">{item.unit}</span>
                         <button
                           onClick={() => removeShoppingItem(item.id)}
                           className="p-1 text-muted-foreground hover:text-destructive transition-colors"

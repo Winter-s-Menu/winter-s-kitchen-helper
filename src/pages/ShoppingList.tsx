@@ -1,7 +1,57 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, Trash2, Check, Minus, Plus } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { CATEGORY_LABELS, type IngredientCategory } from '@/types/recipe';
+
+
+function AmountControl({ amount, unit, onChange }: { amount: number; unit: string; onChange: (v: number) => void }) {
+  const [draft, setDraft] = useState<string>(String(amount));
+  const [focused, setFocused] = useState(false);
+
+  const displayed = focused ? draft : String(amount);
+
+  const step = amount < 1 ? 0.1 : amount < 10 ? 0.5 : 1;
+
+  const commit = (val: number) => {
+    const clamped = Math.max(0, Math.round(val * 100) / 100);
+    onChange(clamped);
+    setDraft(String(clamped));
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={() => commit(Math.max(0, amount - step))}
+        className="h-6 w-6 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
+        aria-label="Minder"
+      >
+        <Minus className="h-3 w-3" />
+      </button>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={displayed}
+        onFocus={() => { setDraft(String(amount)); setFocused(true); }}
+        onBlur={() => {
+          setFocused(false);
+          const parsed = parseFloat(draft);
+          commit(isNaN(parsed) || parsed < 0 ? amount : parsed);
+        }}
+        onChange={e => setDraft(e.target.value)}
+        className="w-14 text-center text-sm bg-transparent outline-none text-foreground rounded-md border border-border px-1 py-0.5 focus:border-primary/40 focus:bg-secondary transition-colors"
+      />
+      <button
+        onClick={() => commit(amount + step)}
+        className="h-6 w-6 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
+        aria-label="Meer"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+      <span className="text-xs text-muted-foreground w-12 ml-1">{unit}</span>
+    </div>
+  );
+}
 
 export default function ShoppingList() {
   const { shoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList } = useApp();
@@ -81,15 +131,11 @@ export default function ShoppingList() {
                         >
                           {item.ingredientName}
                         </span>
-                        <input
-                          type="number"
-                          value={item.amount}
-                          onChange={e => updateShoppingItemAmount(item.id, Number(e.target.value) || 0)}
-                          className="w-16 text-right text-sm bg-transparent outline-none text-muted-foreground rounded-md border border-transparent px-1 py-0.5 focus:border-primary/40 focus:bg-secondary transition-colors"
-                          min={0}
-                          step="any"
+                        <AmountControl
+                          amount={item.amount}
+                          unit={item.unit}
+                          onChange={(val) => updateShoppingItemAmount(item.id, val)}
                         />
-                        <span className="text-xs text-muted-foreground w-12">{item.unit}</span>
                         <button
                           onClick={() => removeShoppingItem(item.id)}
                           className="p-1 text-muted-foreground hover:text-destructive transition-colors"

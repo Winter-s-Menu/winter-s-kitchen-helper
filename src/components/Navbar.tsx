@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Heart, ShoppingCart, SlidersHorizontal } from 'lucide-react';
+import { Search, Heart, ShoppingCart, SlidersHorizontal, User } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface NavbarProps {
   searchQuery?: string;
@@ -10,7 +11,8 @@ interface NavbarProps {
 
 export default function Navbar({ searchQuery, onSearchChange, onOpenFilters }: NavbarProps) {
   const location = useLocation();
-  const { shoppingList, favorites } = useApp();
+  const { shoppingList } = useApp();
+  const { user } = useAuth();
   const isHome = location.pathname === '/';
   const itemCount = shoppingList.filter(i => !i.checked).length;
 
@@ -64,6 +66,13 @@ export default function Navbar({ searchQuery, onSearchChange, onOpenFilters }: N
                 {itemCount > 9 ? '9+' : itemCount}
               </span>
             )}
+          </Link>
+          <Link
+            to={user ? '/account' : '/inloggen'}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            aria-label="Account"
+          >
+            <User className="h-5 w-5" />
           </Link>
         </div>
       </div>

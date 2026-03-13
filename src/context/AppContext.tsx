@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useCallback, useState } from 'react';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
 import type { Filters } from '@/components/FilterModal';
 import { emptyFilters } from '@/components/FilterModal';
@@ -22,79 +23,197 @@ interface AppContextType {
   setSearchQuery: (q: string) => void;
   filters: Filters;
   setFilters: (f: Filters) => void;
+  shareToken: string | null;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useLocalStorage<string[]>('wm-favorites', []);
-  const [shoppingList, setShoppingList] = useLocalStorage<ShoppingListItem[]>('wm-shopping', []);
-  const [notes, setNotes] = useLocalStorage<Note[]>('wm-notes', []);
+  const { user } = useAuth();
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const [shoppingListId, setShoppingListId] = useState<string | null>(null);
+  const [shareToken, setShareToken] = useState<string | null>(null);
 
-  const toggleFavorite = useCallback((recipeId: string) => {
-    setFavorites(prev =>
-      prev.includes(recipeId) ? prev.filter(id => id !== recipeId) : [...prev, recipeId]
-    );
-  }, [setFavorites]);
+  // ── Load user data on auth change ──
+  useEffect(() => {
+    if (!user) {
+      setFavorites([]);
+      setShoppingList([]);
+      setNotes([]);
+      setShoppingListId(null);
+      setShareToken(null);
+      return;
+    }
+    loadFavorites();
+    loadNotes();
+    loadShoppingList();
+  }, [user?.id]);
+
+  // ── Favorites ──
+  async function loadFavorites() {
+    const { data } = await supabase
+      .from('favorites')
+      .select('recipe_id')
+      .eq('user_id', user!.id);
+    setFavorites(data?.map(f => f.recipe_id) ?? []);
+  }
+
+  const toggleFavorite = useCallback(async (recipeId: string) => {
+    if (!user) return;
+    const isFav = favorites.includes(recipeId);
+    if (isFav) {
+      setFavorites(prev => prev.filter(id => id !== recipeId));
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+    } else {
+      setFavorites(prev => [...prev, recipeId]);
+      await supabase.from('favorites').insert({ user_id: user.id, recipe_id: recipeId });
+    }
+  }, [user, favorites]);
 
   const isFavorite = useCallback((recipeId: string) => favorites.includes(recipeId), [favorites]);
 
-  const addToShoppingList = useCallback((items: RecipeIngredient[], scalingFactor: number) => {
+  // ── Notes ──
+  async function loadNotes() {
+    const { data } = await supabase
+      .from('notes')
+      .select('recipe_id, note_text, updated_at')
+      .eq('user_id', user!.id);
+    setNotes(data?.map(n => ({ recipeId: n.recipe_id, text: n.note_text, updatedAt: n.updated_at })) ?? []);
+  }
+
+  const saveNote = useCallback(async (recipeId: string, text: string) => {
+    if (!user) return;
+    if (text.trim()) {
+      setNotes(prev => {
+        const filtered = prev.filter(n => n.recipeId !== recipeId);
+        filtered.push({ recipeId, text: text.trim(), updatedAt: new Date().toISOString() });
+        return filtered;
+      });
+      await supabase.from('notes').upsert(
+        { user_id: user.id, recipe_id: recipeId, note_text: text.trim(), updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,recipe_id' }
+      );
+    } else {
+      setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
+      await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+    }
+  }, [user]);
+
+  const getNote = useCallback((recipeId: string) => notes.find(n => n.recipeId === recipeId), [notes]);
+
+  const deleteNote = useCallback(async (recipeId: string) => {
+    if (!user) return;
+    setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
+    await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+  }, [user]);
+
+  // ── Shopping List ──
+  async function loadShoppingList() {
+    // Get or create shopping list
+    let { data: list } = await supabase
+      .from('shopping_lists')
+      .select('id, share_token')
+      .eq('user_id', user!.id)
+      .single();
+
+    if (!list) {
+      const { data: newList } = await supabase
+        .from('shopping_lists')
+        .insert({ user_id: user!.id })
+        .select('id, share_token')
+        .single();
+      list = newList;
+    }
+
+    if (list) {
+      setShoppingListId(list.id);
+      setShareToken(list.share_token);
+
+      const { data: items } = await supabase
+        .from('shopping_list_items')
+        .select('*')
+        .eq('list_id', list.id);
+
+      setShoppingList(items?.map(i => ({
+        id: i.id,
+        ingredientName: i.ingredient_name,
+        amount: Number(i.amount),
+        unit: i.unit,
+        checked: i.checked,
+        category: i.category as ShoppingListItem['category'],
+      })) ?? []);
+    }
+  }
+
+  const addToShoppingList = useCallback(async (items: RecipeIngredient[], scalingFactor: number) => {
+    if (!user || !shoppingListId) return;
     setShoppingList(prev => {
       const next = [...prev];
+      const toInsert: { list_id: string; ingredient_name: string; amount: number; unit: string; category: string }[] = [];
+      const toUpdate: { id: string; amount: number }[] = [];
+
       for (const item of items) {
-        const scaledAmount = item.amount * scalingFactor;
+        const scaledAmount = Math.round(item.amount * scalingFactor * 100) / 100;
         const existing = next.find(
           s => s.ingredientName.toLowerCase() === item.name.toLowerCase() && s.unit === item.unit
         );
         if (existing) {
           existing.amount += scaledAmount;
+          toUpdate.push({ id: existing.id, amount: existing.amount });
         } else {
+          const id = crypto.randomUUID();
           next.push({
-            id: crypto.randomUUID(),
+            id,
             ingredientName: item.name,
-            amount: Math.round(scaledAmount * 100) / 100,
+            amount: scaledAmount,
             unit: item.unit,
             checked: false,
             category: item.category,
           });
+          toInsert.push({
+            list_id: shoppingListId,
+            ingredient_name: item.name,
+            amount: scaledAmount,
+            unit: item.unit,
+            category: item.category,
+          });
         }
       }
+
+      // Fire async db calls
+      if (toInsert.length) supabase.from('shopping_list_items').insert(toInsert).then(() => loadShoppingList());
+      for (const u of toUpdate) supabase.from('shopping_list_items').update({ amount: u.amount }).eq('id', u.id);
+
       return next;
     });
-  }, [setShoppingList]);
+  }, [user, shoppingListId]);
 
-  const toggleShoppingItem = useCallback((id: string) => {
+  const toggleShoppingItem = useCallback(async (id: string) => {
     setShoppingList(prev => prev.map(i => (i.id === id ? { ...i, checked: !i.checked } : i)));
-  }, [setShoppingList]);
+    const item = shoppingList.find(i => i.id === id);
+    if (item) await supabase.from('shopping_list_items').update({ checked: !item.checked }).eq('id', id);
+  }, [shoppingList]);
 
-  const updateShoppingItemAmount = useCallback((id: string, amount: number) => {
+  const updateShoppingItemAmount = useCallback(async (id: string, amount: number) => {
     setShoppingList(prev => prev.map(i => (i.id === id ? { ...i, amount } : i)));
-  }, [setShoppingList]);
+    await supabase.from('shopping_list_items').update({ amount }).eq('id', id);
+  }, []);
 
-  const removeShoppingItem = useCallback((id: string) => {
+  const removeShoppingItem = useCallback(async (id: string) => {
     setShoppingList(prev => prev.filter(i => i.id !== id));
-  }, [setShoppingList]);
+    await supabase.from('shopping_list_items').delete().eq('id', id);
+  }, []);
 
-  const clearShoppingList = useCallback(() => setShoppingList([]), [setShoppingList]);
-
-  const saveNote = useCallback((recipeId: string, text: string) => {
-    setNotes(prev => {
-      const filtered = prev.filter(n => n.recipeId !== recipeId);
-      if (text.trim()) {
-        filtered.push({ recipeId, text: text.trim(), updatedAt: new Date().toISOString() });
-      }
-      return filtered;
-    });
-  }, [setNotes]);
-
-  const getNote = useCallback((recipeId: string) => notes.find(n => n.recipeId === recipeId), [notes]);
-
-  const deleteNote = useCallback((recipeId: string) => {
-    setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
-  }, [setNotes]);
+  const clearShoppingList = useCallback(async () => {
+    setShoppingList([]);
+    if (shoppingListId) {
+      await supabase.from('shopping_list_items').delete().eq('list_id', shoppingListId);
+    }
+  }, [shoppingListId]);
 
   return (
     <AppContext.Provider
@@ -103,6 +222,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         shoppingList, addToShoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList,
         notes, saveNote, getNote, deleteNote,
         searchQuery, setSearchQuery, filters, setFilters,
+        shareToken,
       }}
     >
       {children}

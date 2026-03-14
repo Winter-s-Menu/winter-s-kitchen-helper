@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock } from 'lucide-react';
 import { recipes } from '@/data/recipes';
@@ -29,6 +29,8 @@ export default function RecipeDetail() {
   const [servings, setServings] = useState(recipe?.baseServings ?? 4);
   const [showNote, setShowNote] = useState(false);
   const [noteText, setNoteText] = useState('');
+
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
   if (!recipe) {
     return (

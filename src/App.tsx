@@ -33,6 +33,7 @@ const App = () => (
               <Route path="/registreren" element={<Signup />} />
               <Route path="/account" element={<Profile />} />
               <Route path="/gedeeld/:token" element={<SharedShoppingList />} />
+              <Route path="/email-verified" element={<EmailVerified />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

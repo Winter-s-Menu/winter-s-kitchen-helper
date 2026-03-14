@@ -126,9 +126,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteNote = useCallback(async (recipeId: string) => {
     if (!user) return;
+    const prevNotes = [...notes];
     setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
-    await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
-  }, [user]);
+    const { error } = await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+    if (error) {
+      setNotes(prevNotes);
+      toast.error('Notitie verwijderen mislukt');
+    }
+  }, [user, notes]);
 
   // ── Shopping List ──
   async function loadShoppingList() {

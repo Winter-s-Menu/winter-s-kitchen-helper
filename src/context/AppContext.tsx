@@ -97,20 +97,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveNote = useCallback(async (recipeId: string, text: string) => {
     if (!user) return;
     if (text.trim()) {
+      const prevNotes = [...notes];
       setNotes(prev => {
         const filtered = prev.filter(n => n.recipeId !== recipeId);
         filtered.push({ recipeId, text: text.trim(), updatedAt: new Date().toISOString() });
         return filtered;
       });
-      await supabase.from('notes').upsert(
+      const { error } = await supabase.from('notes').upsert(
         { user_id: user.id, recipe_id: recipeId, note_text: text.trim(), updated_at: new Date().toISOString() },
         { onConflict: 'user_id,recipe_id' }
       );
+      if (error) {
+        setNotes(prevNotes);
+        toast.error('Notitie opslaan mislukt');
+      }
     } else {
+      const prevNotes = [...notes];
       setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
-      await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      const { error } = await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      if (error) {
+        setNotes(prevNotes);
+        toast.error('Notitie verwijderen mislukt');
+      }
     }
-  }, [user]);
+  }, [user, notes]);
 
   const getNote = useCallback((recipeId: string) => notes.find(n => n.recipeId === recipeId), [notes]);
 

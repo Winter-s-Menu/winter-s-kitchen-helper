@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import SharedShoppingList from "./pages/SharedShoppingList";
+import EmailVerified from "./pages/EmailVerified";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

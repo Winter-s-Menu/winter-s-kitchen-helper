@@ -68,10 +68,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const isFav = favorites.includes(recipeId);
     if (isFav) {
       setFavorites(prev => prev.filter(id => id !== recipeId));
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      if (error) {
+        setFavorites(prev => [...prev, recipeId]);
+        toast.error('Favoriet verwijderen mislukt');
+      }
     } else {
       setFavorites(prev => [...prev, recipeId]);
-      await supabase.from('favorites').insert({ user_id: user.id, recipe_id: recipeId });
+      const { error } = await supabase.from('favorites').insert({ user_id: user.id, recipe_id: recipeId });
+      if (error) {
+        setFavorites(prev => prev.filter(id => id !== recipeId));
+        toast.error('Favoriet opslaan mislukt');
+      }
     }
   }, [user, favorites]);
 

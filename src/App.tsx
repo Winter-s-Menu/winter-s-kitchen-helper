@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import SharedShoppingList from "./pages/SharedShoppingList";
+import EmailVerified from "./pages/EmailVerified";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/registreren" element={<Signup />} />
               <Route path="/account" element={<Profile />} />
               <Route path="/gedeeld/:token" element={<SharedShoppingList />} />
+              <Route path="/email-verified" element={<EmailVerified />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

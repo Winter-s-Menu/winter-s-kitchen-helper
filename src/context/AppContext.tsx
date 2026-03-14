@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
@@ -67,10 +68,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const isFav = favorites.includes(recipeId);
     if (isFav) {
       setFavorites(prev => prev.filter(id => id !== recipeId));
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      const { error } = await supabase.from('favorites').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      if (error) {
+        setFavorites(prev => [...prev, recipeId]);
+        toast.error('Favoriet verwijderen mislukt');
+      }
     } else {
       setFavorites(prev => [...prev, recipeId]);
-      await supabase.from('favorites').insert({ user_id: user.id, recipe_id: recipeId });
+      const { error } = await supabase.from('favorites').insert({ user_id: user.id, recipe_id: recipeId });
+      if (error) {
+        setFavorites(prev => prev.filter(id => id !== recipeId));
+        toast.error('Favoriet opslaan mislukt');
+      }
     }
   }, [user, favorites]);
 
@@ -88,28 +97,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveNote = useCallback(async (recipeId: string, text: string) => {
     if (!user) return;
     if (text.trim()) {
+      const prevNotes = [...notes];
       setNotes(prev => {
         const filtered = prev.filter(n => n.recipeId !== recipeId);
         filtered.push({ recipeId, text: text.trim(), updatedAt: new Date().toISOString() });
         return filtered;
       });
-      await supabase.from('notes').upsert(
+      const { error } = await supabase.from('notes').upsert(
         { user_id: user.id, recipe_id: recipeId, note_text: text.trim(), updated_at: new Date().toISOString() },
         { onConflict: 'user_id,recipe_id' }
       );
+      if (error) {
+        setNotes(prevNotes);
+        toast.error('Notitie opslaan mislukt');
+      }
     } else {
+      const prevNotes = [...notes];
       setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
-      await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      const { error } = await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+      if (error) {
+        setNotes(prevNotes);
+        toast.error('Notitie verwijderen mislukt');
+      }
     }
-  }, [user]);
+  }, [user, notes]);
 
   const getNote = useCallback((recipeId: string) => notes.find(n => n.recipeId === recipeId), [notes]);
 
   const deleteNote = useCallback(async (recipeId: string) => {
     if (!user) return;
+    const prevNotes = [...notes];
     setNotes(prev => prev.filter(n => n.recipeId !== recipeId));
-    await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
-  }, [user]);
+    const { error } = await supabase.from('notes').delete().eq('user_id', user.id).eq('recipe_id', recipeId);
+    if (error) {
+      setNotes(prevNotes);
+      toast.error('Notitie verwijderen mislukt');
+    }
+  }, [user, notes]);
 
   // ── Shopping List ──
   async function loadShoppingList() {

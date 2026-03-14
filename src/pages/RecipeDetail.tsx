@@ -30,6 +30,8 @@ export default function RecipeDetail() {
   const [showNote, setShowNote] = useState(false);
   const [noteText, setNoteText] = useState('');
 
+  useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
   if (!recipe) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

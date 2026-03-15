@@ -51,6 +51,8 @@ export default function Profile() {
           </div>
         </div>
 
+        <ChangePasswordSection />
+
         <button
           onClick={handleSignOut}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"

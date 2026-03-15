@@ -1,8 +1,104 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, LogOut, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, LogOut, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
+import { ALLERGEN_OPTIONS } from '@/types/recipe';
 import { toast } from 'sonner';
+
+function ProfileSection() {
+  const { profile, updateProfile } = useApp();
+  const [name, setName] = useState(profile.name);
+  const [selectedAllergies, setSelectedAllergies] = useState<string[]>(profile.allergies);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setName(profile.name);
+    setSelectedAllergies(profile.allergies);
+  }, [profile.name, profile.allergies]);
+
+  const toggleAllergy = (value: string) => {
+    setSelectedAllergies(prev =>
+      prev.includes(value) ? prev.filter(a => a !== value) : [...prev, value]
+    );
+  };
+
+  const hasChanges = name !== profile.name || JSON.stringify(selectedAllergies.sort()) !== JSON.stringify([...profile.allergies].sort());
+
+  const handleSave = async () => {
+    setSaving(true);
+    await updateProfile({ name: name.trim(), allergies: selectedAllergies });
+    setSaving(false);
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-5 mb-4 space-y-4">
+      <h2 className="font-serif text-xl">Profiel</h2>
+
+      <div>
+        <label className="text-xs text-muted-foreground uppercase tracking-wider" htmlFor="profile-name">Naam</label>
+        <input
+          id="profile-name"
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          className="mt-1 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-base outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
+          placeholder="Je naam"
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-muted-foreground uppercase tracking-wider">Allergieën</label>
+        <p className="text-xs text-muted-foreground mt-0.5 mb-2">Recepten met deze allergenen worden automatisch gefilterd op de homepagina.</p>
+        <div className="flex flex-wrap gap-2">
+          {ALLERGEN_OPTIONS.map(o => (
+            <button
+              key={o.value}
+              onClick={() => toggleAllergy(o.value)}
+              className={`inline-flex items-center gap-1.5 text-sm rounded-full px-3 py-1.5 border transition-colors ${
+                selectedAllergies.includes(o.value)
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-foreground border-border hover:bg-secondary'
+              }`}
+            >
+              {selectedAllergies.includes(o.value) && <Check className="h-3.5 w-3.5" />}
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {hasChanges && (
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full rounded-xl bg-primary text-primary-foreground py-3 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {saving ? 'Opslaan…' : 'Profiel opslaan'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AccountInfo() {
+  const { user } = useAuth();
+  return (
+    <div className="rounded-xl border bg-card p-5 mb-4">
+      <h2 className="font-serif text-xl mb-4">Account</h2>
+      <div className="space-y-3">
+        <div>
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">E-mail</span>
+          <p className="text-sm mt-0.5">{user!.email}</p>
+        </div>
+        <div>
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">Account sinds</span>
+          <p className="text-sm mt-0.5">{new Date(user!.created_at).toLocaleDateString('nl-NL', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ChangePasswordSection() {
   const { updatePassword } = useAuth();
@@ -71,7 +167,7 @@ function ChangePasswordSection() {
 }
 
 export default function Profile() {
-  const { user, signOut, updatePassword } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -103,20 +199,8 @@ export default function Profile() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <div className="rounded-xl border bg-card p-5 mb-4">
-          <h2 className="font-serif text-xl mb-4">Profiel</h2>
-          <div className="space-y-3">
-            <div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">E-mail</span>
-              <p className="text-sm mt-0.5">{user.email}</p>
-            </div>
-            <div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">Account sinds</span>
-              <p className="text-sm mt-0.5">{new Date(user.created_at).toLocaleDateString('nl-NL', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          </div>
-        </div>
-
+        <ProfileSection />
+        <AccountInfo />
         <ChangePasswordSection />
 
         <button

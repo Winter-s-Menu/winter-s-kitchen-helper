@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, LogOut } from 'lucide-react';
+import { ChevronLeft, LogOut, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export default function Profile() {
   const { user, signOut } = useAuth();

@@ -69,4 +69,5 @@ export const ALLERGEN_OPTIONS = [
   { value: 'lactose', label: 'Lactosevrij' },
   { value: 'ei', label: 'Eivrij' },
   { value: 'soja', label: 'Sojavrij' },
+  { value: 'schaaldieren', label: 'Schaaldierenvrij' },
 ];

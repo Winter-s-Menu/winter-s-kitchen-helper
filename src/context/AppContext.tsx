@@ -1,10 +1,15 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
 import type { Filters } from '@/components/FilterModal';
 import { emptyFilters } from '@/components/FilterModal';
+
+export interface UserProfile {
+  name: string;
+  allergies: string[];
+}
 
 interface AppContextType {
   favorites: string[];
@@ -25,6 +30,8 @@ interface AppContextType {
   filters: Filters;
   setFilters: (f: Filters) => void;
   shareToken: string | null;
+  profile: UserProfile;
+  updateProfile: (p: Partial<UserProfile>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -38,6 +45,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [shoppingListId, setShoppingListId] = useState<string | null>(null);
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile>({ name: '', allergies: [] });
+  const profileLoadedRef = useRef(false);
 
   // ── Load user data on auth change ──
   useEffect(() => {
@@ -47,12 +56,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setNotes([]);
       setShoppingListId(null);
       setShareToken(null);
+      setProfile({ name: '', allergies: [] });
+      setFilters(emptyFilters);
+      profileLoadedRef.current = false;
       return;
     }
+    loadProfile();
     loadFavorites();
     loadNotes();
     loadShoppingList();
   }, [user?.id]);
+
+  // ── Profile ──
+  async function loadProfile() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, allergies')
+      .eq('id', user!.id)
+      .single();
+    if (data) {
+      const p: UserProfile = {
+        name: data.name ?? '',
+        allergies: data.allergies ?? [],
+      };
+      setProfile(p);
+      // Apply saved allergies as default filters on login/session restore
+      if (p.allergies.length > 0) {
+        setFilters(prev => ({ ...prev, excludeAllergens: [...p.allergies] }));
+      }
+      profileLoadedRef.current = true;
+    }
+  }
+
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+    const newProfile = { ...profile, ...updates };
+    setProfile(newProfile);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name: newProfile.name, allergies: newProfile.allergies })
+      .eq('id', user.id);
+    if (error) {
+      toast.error('Profiel opslaan mislukt');
+    } else {
+      toast.success('Profiel opgeslagen');
+    }
+  }, [user, profile]);
 
   // ── Favorites ──
   async function loadFavorites() {
@@ -137,7 +186,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Shopping List ──
   async function loadShoppingList() {
-    // Get or create shopping list
     let { data: list } = await supabase
       .from('shopping_lists')
       .select('id, share_token')
@@ -208,7 +256,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Fire async db calls
       if (toInsert.length) supabase.from('shopping_list_items').insert(toInsert).then(() => loadShoppingList());
       for (const u of toUpdate) supabase.from('shopping_list_items').update({ amount: u.amount }).eq('id', u.id);
 
@@ -247,6 +294,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         notes, saveNote, getNote, deleteNote,
         searchQuery, setSearchQuery, filters, setFilters,
         shareToken,
+        profile, updateProfile,
       }}
     >
       {children}

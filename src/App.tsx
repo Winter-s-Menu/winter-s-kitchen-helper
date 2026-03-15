@@ -11,6 +11,8 @@ import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import SharedShoppingList from "./pages/SharedShoppingList";
 import EmailVerified from "./pages/EmailVerified";
 import NotFound from "./pages/NotFound";
@@ -32,6 +34,8 @@ const App = () => (
               <Route path="/inloggen" element={<Login />} />
               <Route path="/registreren" element={<Signup />} />
               <Route path="/account" element={<Profile />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/gedeeld/:token" element={<SharedShoppingList />} />
               <Route path="/email-verified" element={<EmailVerified />} />
               <Route path="*" element={<NotFound />} />

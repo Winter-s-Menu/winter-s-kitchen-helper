@@ -81,10 +81,15 @@ export default function Login() {
             {loading ? 'Laden…' : 'Inloggen'}
           </button>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Nog geen account?{' '}
-            <Link to="/registreren" className="text-primary hover:underline">Registreren</Link>
-          </p>
+          <div className="text-center space-y-2">
+            <Link to="/forgot-password" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Wachtwoord vergeten?
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              Nog geen account?{' '}
+              <Link to="/registreren" className="text-primary hover:underline">Registreren</Link>
+            </p>
+          </div>
         </form>
       </main>
     </div>

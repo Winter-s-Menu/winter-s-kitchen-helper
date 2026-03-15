@@ -11,6 +11,8 @@ import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import SharedShoppingList from "./pages/SharedShoppingList";
 import EmailVerified from "./pages/EmailVerified";
 import NotFound from "./pages/NotFound";

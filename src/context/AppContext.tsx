@@ -92,6 +92,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const newProfile = { ...profile, ...updates };
     setProfile(newProfile);
+    if (updates.allergies) {
+      setFilters(prev => ({ ...prev, excludeAllergens: [...newProfile.allergies] }));
+    }
     const { error } = await supabase
       .from('profiles')
       .update({ name: newProfile.name, allergies: newProfile.allergies })

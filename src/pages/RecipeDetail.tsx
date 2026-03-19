@@ -21,8 +21,8 @@ function formatAmount(n: number): string {
 
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
+  const { recipes, recipesLoading, toggleFavorite, isFavorite, addToShoppingList, saveNote, getNote, deleteNote } = useApp();
   const recipe = recipes.find(r => r.id === id);
-  const { toggleFavorite, isFavorite, addToShoppingList, saveNote, getNote, deleteNote } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [servings, setServings] = useState(recipe?.baseServings ?? 4);

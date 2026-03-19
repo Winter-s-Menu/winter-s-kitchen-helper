@@ -348,6 +348,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        recipes, recipesLoading,
         favorites, toggleFavorite, isFavorite,
         shoppingList, addToShoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList,
         notes, saveNote, getNote, deleteNote,

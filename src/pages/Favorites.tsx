@@ -3,10 +3,9 @@ import { ChevronLeft } from 'lucide-react';
 import RecipeCard from '@/components/RecipeCard';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { recipes } from '@/data/recipes';
 
 export default function Favorites() {
-  const { favorites } = useApp();
+  const { favorites, recipes } = useApp();
   const { user } = useAuth();
   const favoriteRecipes = recipes.filter(r => favorites.includes(r.id));
 

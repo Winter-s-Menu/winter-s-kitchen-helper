@@ -82,6 +82,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: r.slug,
       title: r.title,
       description: r.description ?? '',
+      imageUrl: r.image_url ?? null,
       prepTimeMinutes: r.prep_time_minutes,
       type: r.type,
       course: r.course,

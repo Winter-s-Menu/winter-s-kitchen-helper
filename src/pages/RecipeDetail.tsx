@@ -66,6 +66,10 @@ export default function RecipeDetail() {
 
   const handleAddToList = () => {
     requireAuth(() => {
+      if (!recipe.ingredients.length) {
+        toast.error('Geen ingrediënten gevonden voor dit recept');
+        return;
+      }
       addToShoppingList(recipe.ingredients, scalingFactor);
       toast.success('Ingrediënten toegevoegd aan je boodschappenlijst');
     });

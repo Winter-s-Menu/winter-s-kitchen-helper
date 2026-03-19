@@ -14,6 +14,7 @@ export interface Recipe {
   id: string;
   title: string;
   description: string;
+  imageUrl: string | null;
   prepTimeMinutes: number;
   type: RecipeType;
   course: Course;

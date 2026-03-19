@@ -22,13 +22,24 @@ export default function RecipeCard({ recipe }: { recipe: Recipe }) {
       to={`/recept/${recipe.id}`}
       className="group block rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow"
     >
-      <div
-        className={`${gradientClass[recipe.type]} h-36 sm:h-44 flex items-center justify-center text-5xl`}
-      >
-        <span className="opacity-60 group-hover:scale-110 transition-transform">
-          {emoji[recipe.type]}
-        </span>
-      </div>
+      {recipe.imageUrl ? (
+        <div className="h-36 sm:h-44 overflow-hidden">
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div
+          className={`${gradientClass[recipe.type]} h-36 sm:h-44 flex items-center justify-center text-5xl`}
+        >
+          <span className="opacity-60 group-hover:scale-110 transition-transform">
+            {emoji[recipe.type]}
+          </span>
+        </div>
+      )}
       <div className="p-4">
         <h3 className="font-serif text-lg leading-tight mb-1">{recipe.title}</h3>
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{recipe.description}</p>

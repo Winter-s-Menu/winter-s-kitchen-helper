@@ -31,6 +31,14 @@ export default function RecipeDetail() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
+  if (recipesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Laden…</p>
+      </div>
+    );
+  }
+
   if (!recipe) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

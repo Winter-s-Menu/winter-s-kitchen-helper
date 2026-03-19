@@ -65,13 +65,17 @@ export default function RecipeDetail() {
   const existingNote = getNote(recipe.id);
 
   const handleAddToList = () => {
-    requireAuth(() => {
+    requireAuth(async () => {
       if (!recipe.ingredients.length) {
         toast.error('Geen ingrediënten gevonden voor dit recept');
         return;
       }
-      addToShoppingList(recipe.ingredients, scalingFactor);
-      toast.success('Ingrediënten toegevoegd aan je boodschappenlijst');
+      const success = await addToShoppingList(recipe.ingredients, scalingFactor);
+      if (success) {
+        toast.success('Ingrediënten toegevoegd aan je boodschappenlijst');
+      } else {
+        toast.error('Toevoegen aan boodschappenlijst mislukt');
+      }
     });
   };
 

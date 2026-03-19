@@ -2,7 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useEffect, use
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
+import type { ShoppingListItem, Note, RecipeIngredient, Recipe } from '@/types/recipe';
 import type { Filters } from '@/components/FilterModal';
 import { emptyFilters } from '@/components/FilterModal';
 

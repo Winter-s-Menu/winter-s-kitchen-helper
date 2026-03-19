@@ -18,7 +18,7 @@ interface AppContextType {
   toggleFavorite: (recipeId: string) => void;
   isFavorite: (recipeId: string) => boolean;
   shoppingList: ShoppingListItem[];
-  addToShoppingList: (items: RecipeIngredient[], scalingFactor: number) => void;
+  addToShoppingList: (items: RecipeIngredient[], scalingFactor: number) => Promise<boolean>;
   toggleShoppingItem: (id: string) => void;
   updateShoppingItemAmount: (id: string, amount: number) => void;
   removeShoppingItem: (id: string) => void;

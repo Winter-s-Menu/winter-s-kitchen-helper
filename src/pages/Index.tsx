@@ -2,11 +2,10 @@ import { useState, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
 import FilterModal from '@/components/FilterModal';
-import { recipes } from '@/data/recipes';
 import { useApp } from '@/context/AppContext';
 
 export default function Index() {
-  const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters } = useApp();
+  const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters, recipes, recipesLoading } = useApp();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = useMemo(() => {
@@ -39,7 +38,7 @@ export default function Index() {
     if (filters.course) list = list.filter(r => r.course === filters.course);
 
     return list;
-  }, [search, filters]);
+  }, [search, filters, recipes]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +46,9 @@ export default function Index() {
       <FilterModal open={filtersOpen} onOpenChange={setFiltersOpen} filters={filters} onChange={setFilters} />
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        {filtered.length === 0 ? (
+        {recipesLoading ? (
+          <p className="text-center text-muted-foreground py-20">Recepten laden…</p>
+        ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">
             Geen recepten gevonden. Probeer andere zoektermen of filters.
           </p>

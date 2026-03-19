@@ -2,7 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useEffect, use
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import type { ShoppingListItem, Note, RecipeIngredient } from '@/types/recipe';
+import type { ShoppingListItem, Note, RecipeIngredient, Recipe } from '@/types/recipe';
 import type { Filters } from '@/components/FilterModal';
 import { emptyFilters } from '@/components/FilterModal';
 
@@ -12,6 +12,8 @@ export interface UserProfile {
 }
 
 interface AppContextType {
+  recipes: Recipe[];
+  recipesLoading: boolean;
   favorites: string[];
   toggleFavorite: (recipeId: string) => void;
   isFavorite: (recipeId: string) => boolean;
@@ -38,6 +40,8 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipesLoading, setRecipesLoading] = useState(true);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -47,6 +51,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({ name: '', allergies: [] });
   const profileLoadedRef = useRef(false);
+
+  // ── Load recipes from Supabase (public, no auth needed) ──
+  useEffect(() => {
+    loadRecipes();
+  }, []);
+
+  async function loadRecipes() {
+    setRecipesLoading(true);
+    const { data, error } = await supabase
+      .from('recipes')
+      .select(`
+        id, slug, title, description, image_url,
+        prep_time_minutes, type, course, allergens, tags,
+        base_servings, steps,
+        recipe_ingredients (
+          id, amount, unit, sort_order,
+          ingredients ( name, category )
+        )
+      `)
+      .order('title');
+
+    if (error) {
+      console.error('Failed to load recipes:', error);
+      setRecipesLoading(false);
+      return;
+    }
+
+    const mapped: Recipe[] = (data ?? []).map((r: any) => ({
+      id: r.slug,
+      title: r.title,
+      description: r.description ?? '',
+      prepTimeMinutes: r.prep_time_minutes,
+      type: r.type,
+      course: r.course,
+      allergens: r.allergens ?? [],
+      tags: r.tags ?? [],
+      baseServings: r.base_servings,
+      steps: r.steps ?? [],
+      ingredients: (r.recipe_ingredients ?? [])
+        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((ri: any) => ({
+          id: ri.id,
+          name: ri.ingredients?.name ?? '',
+          amount: Number(ri.amount),
+          unit: ri.unit,
+          category: ri.ingredients?.category ?? 'overig',
+        })),
+    }));
+
+    setRecipes(mapped);
+    setRecipesLoading(false);
+  }
 
   // ── Load user data on auth change ──
   useEffect(() => {
@@ -292,6 +348,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        recipes, recipesLoading,
         favorites, toggleFavorite, isFavorite,
         shoppingList, addToShoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList,
         notes, saveNote, getNote, deleteNote,

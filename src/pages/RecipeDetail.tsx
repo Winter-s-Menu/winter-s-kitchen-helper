@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock } from 'lucide-react';
-import { recipes } from '@/data/recipes';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -22,8 +21,8 @@ function formatAmount(n: number): string {
 
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
+  const { recipes, recipesLoading, toggleFavorite, isFavorite, addToShoppingList, saveNote, getNote, deleteNote } = useApp();
   const recipe = recipes.find(r => r.id === id);
-  const { toggleFavorite, isFavorite, addToShoppingList, saveNote, getNote, deleteNote } = useApp();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [servings, setServings] = useState(recipe?.baseServings ?? 4);
@@ -31,6 +30,14 @@ export default function RecipeDetail() {
   const [noteText, setNoteText] = useState('');
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  if (recipesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Laden…</p>
+      </div>
+    );
+  }
 
   if (!recipe) {
     return (

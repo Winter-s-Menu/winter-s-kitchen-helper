@@ -12,6 +12,8 @@ export interface UserProfile {
 }
 
 interface AppContextType {
+  recipes: Recipe[];
+  recipesLoading: boolean;
   favorites: string[];
   toggleFavorite: (recipeId: string) => void;
   isFavorite: (recipeId: string) => boolean;

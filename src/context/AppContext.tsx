@@ -18,7 +18,7 @@ interface AppContextType {
   toggleFavorite: (recipeId: string) => void;
   isFavorite: (recipeId: string) => boolean;
   shoppingList: ShoppingListItem[];
-  addToShoppingList: (items: RecipeIngredient[], scalingFactor: number) => void;
+  addToShoppingList: (items: RecipeIngredient[], scalingFactor: number) => Promise<boolean>;
   toggleShoppingItem: (id: string) => void;
   updateShoppingItemAmount: (id: string, amount: number) => void;
   removeShoppingItem: (id: string) => void;
@@ -281,47 +281,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const addToShoppingList = useCallback(async (items: RecipeIngredient[], scalingFactor: number) => {
-    if (!user || !shoppingListId) return;
-    setShoppingList(prev => {
-      const next = [...prev];
-      const toInsert: { list_id: string; ingredient_name: string; amount: number; unit: string; category: string }[] = [];
-      const toUpdate: { id: string; amount: number }[] = [];
+  const addToShoppingList = useCallback(async (items: RecipeIngredient[], scalingFactor: number): Promise<boolean> => {
+    if (!user || !shoppingListId) return false;
 
-      for (const item of items) {
-        const scaledAmount = Math.round(item.amount * scalingFactor * 100) / 100;
-        const existing = next.find(
-          s => s.ingredientName.toLowerCase() === item.name.toLowerCase() && s.unit === item.unit
-        );
-        if (existing) {
-          existing.amount += scaledAmount;
-          toUpdate.push({ id: existing.id, amount: existing.amount });
-        } else {
-          const id = crypto.randomUUID();
-          next.push({
-            id,
-            ingredientName: item.name,
-            amount: scaledAmount,
-            unit: item.unit,
-            checked: false,
-            category: item.category,
-          });
-          toInsert.push({
-            list_id: shoppingListId,
-            ingredient_name: item.name,
-            amount: scaledAmount,
-            unit: item.unit,
-            category: item.category,
-          });
+    const currentList = [...shoppingList];
+    const toInsert: { list_id: string; ingredient_name: string; amount: number; unit: string; category: string }[] = [];
+    const toUpdate: { id: string; amount: number }[] = [];
+    const nextList = [...currentList];
+
+    for (const item of items) {
+      if (!item.name) continue;
+      const scaledAmount = Math.round(item.amount * scalingFactor * 100) / 100;
+      const existing = nextList.find(
+        s => s.ingredientName.toLowerCase() === item.name.toLowerCase() && s.unit === item.unit
+      );
+      if (existing) {
+        existing.amount += scaledAmount;
+        toUpdate.push({ id: existing.id, amount: existing.amount });
+      } else {
+        const id = crypto.randomUUID();
+        nextList.push({
+          id,
+          ingredientName: item.name,
+          amount: scaledAmount,
+          unit: item.unit,
+          checked: false,
+          category: item.category,
+        });
+        toInsert.push({
+          list_id: shoppingListId,
+          ingredient_name: item.name,
+          amount: scaledAmount,
+          unit: item.unit,
+          category: item.category,
+        });
+      }
+    }
+
+    if (!toInsert.length && !toUpdate.length) return false;
+
+    // Optimistic update
+    setShoppingList(nextList);
+
+    try {
+      if (toInsert.length) {
+        const { error } = await supabase.from('shopping_list_items').insert(toInsert);
+        if (error) {
+          console.error('Shopping list insert failed:', error);
+          setShoppingList(currentList);
+          return false;
         }
       }
-
-      if (toInsert.length) supabase.from('shopping_list_items').insert(toInsert).then(() => loadShoppingList());
-      for (const u of toUpdate) supabase.from('shopping_list_items').update({ amount: u.amount }).eq('id', u.id);
-
-      return next;
-    });
-  }, [user, shoppingListId]);
+      for (const u of toUpdate) {
+        await supabase.from('shopping_list_items').update({ amount: u.amount }).eq('id', u.id);
+      }
+      // Reload to sync server-generated IDs
+      loadShoppingList();
+      return true;
+    } catch (e) {
+      console.error('Shopping list operation failed:', e);
+      setShoppingList(currentList);
+      return false;
+    }
+  }, [user, shoppingListId, shoppingList]);
 
   const toggleShoppingItem = useCallback(async (id: string) => {
     setShoppingList(prev => prev.map(i => (i.id === id ? { ...i, checked: !i.checked } : i)));

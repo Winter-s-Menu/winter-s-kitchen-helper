@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock } from 'lucide-react';
-import { recipes } from '@/data/recipes';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';

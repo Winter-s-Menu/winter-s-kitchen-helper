@@ -107,7 +107,7 @@ export default function SharedShoppingList() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
-          <h1 className="font-serif text-lg">Gedeelde lijst</h1>
+          <h1 className="font-serif text-lg items-center">Gedeelde lijst</h1>
           <div className="w-16" />
         </div>
       </header>

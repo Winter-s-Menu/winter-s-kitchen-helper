@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock } from 'lucide-react';
+import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -10,6 +10,13 @@ const gradientClass: Record<string, string> = {
   vis: 'recipe-gradient-vis',
   vegan: 'recipe-gradient-vegan',
   vegetarisch: 'recipe-gradient-vegetarisch',
+};
+
+const emoji: Record<string, string> = {
+  vlees: '🥩',
+  vis: '🐟',
+  vegan: '🌱',
+  vegetarisch: '🧀',
 };
 
 function formatAmount(n: number): string {
@@ -79,6 +86,16 @@ export default function RecipeDetail() {
     });
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/recept/${recipe.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link gekopieerd');
+    } catch {
+      toast.error('Kopiëren mislukt. Kopieer de URL handmatig uit de adresbalk.');
+    }
+  };
+
   const openNote = () => {
     requireAuth(() => {
       setNoteText(existingNote?.text ?? '');
@@ -98,31 +115,49 @@ export default function RecipeDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className={`${gradientClass[recipe.type]} relative`}>
-        <div className="mx-auto max-w-3xl px-4 pt-4 pb-16">
+      {/* Hero image or gradient */}
+      <div className="relative">
+        {recipe.imageUrl ? (
+          <div className="w-full h-48 sm:h-64 overflow-hidden">
+            <img
+              src={recipe.imageUrl}
+              alt={recipe.title}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </div>
+        ) : (
+          <div className={`${gradientClass[recipe.type]} h-48 sm:h-64 flex items-center justify-center text-6xl`}>
+            <span className="opacity-50">{emoji[recipe.type]}</span>
+          </div>
+        )}
+        <div className="absolute top-4 left-4">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground mb-8"
+            className="inline-flex items-center gap-1 text-sm bg-background/70 backdrop-blur-sm rounded-full px-3 py-1.5 text-foreground/80 hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" /> Terug
           </Link>
-          <h1 className="font-serif text-3xl sm:text-4xl mb-2">{recipe.title}</h1>
-          <p className="text-foreground/70 max-w-lg">{recipe.description}</p>
-          <div className="flex items-center gap-3 mt-4 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-sm text-foreground/60">
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-3xl px-4 -mt-6 relative z-10">
+        {/* Title card */}
+        <div className="rounded-xl bg-card border p-5 mb-4">
+          <h1 className="font-serif text-2xl sm:text-3xl mb-1">{recipe.title}</h1>
+          <p className="text-foreground/60 text-sm mb-3">{recipe.description}</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" /> {recipe.prepTimeMinutes} min
             </span>
             {recipe.tags.map(tag => (
-              <span key={tag} className="text-xs rounded-full bg-card/60 px-2 py-0.5">
+              <span key={tag} className="text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground">
                 {tag}
               </span>
             ))}
           </div>
         </div>
-      </div>
 
-      <main className="mx-auto max-w-3xl px-4 mt-6">
         {/* Actions */}
         <div className="flex gap-2 mb-6">
           <button
@@ -148,6 +183,13 @@ export default function RecipeDetail() {
             aria-label="Notitie"
           >
             <StickyNote className="h-5 w-5" />
+          </button>
+          <button
+            onClick={handleShare}
+            className="rounded-xl px-4 py-3 border bg-card border-border hover:bg-secondary transition-colors"
+            aria-label="Deel"
+          >
+            <Share2 className="h-5 w-5" />
           </button>
         </div>
 

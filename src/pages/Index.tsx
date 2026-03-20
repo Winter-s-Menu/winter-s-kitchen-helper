@@ -3,10 +3,13 @@ import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
 import FilterModal from '@/components/FilterModal';
 import { useApp } from '@/context/AppContext';
+import { useScrollRestore } from '@/hooks/useScrollRestore';
 
 export default function Index() {
   const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters, recipes, recipesLoading } = useApp();
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useScrollRestore('home');
 
   const filtered = useMemo(() => {
     let list = recipes;

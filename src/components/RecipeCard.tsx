@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Clock } from 'lucide-react';
 import type { Recipe } from '@/types/recipe';
+import { saveScrollPosition } from '@/hooks/useScrollRestore';
 
 const gradientClass: Record<string, string> = {
   vlees: 'recipe-gradient-vlees',
@@ -20,6 +21,7 @@ export default function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <Link
       to={`/recept/${recipe.id}`}
+      onClick={() => saveScrollPosition('home')}
       className="group block rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow"
     >
       {recipe.imageUrl ? (

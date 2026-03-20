@@ -45,6 +45,23 @@ export default function SharedShoppingList() {
     })();
   }, [token]);
 
+  const toggleItem = async (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const newChecked = !item.checked;
+    // Optimistic update
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, checked: newChecked } : i));
+    const { error } = await supabase
+      .from('shopping_list_items')
+      .update({ checked: newChecked })
+      .eq('id', itemId);
+    if (error) {
+      // Revert on failure
+      setItems(prev => prev.map(i => i.id === itemId ? { ...i, checked: !newChecked } : i));
+      toast.error('Kon item niet bijwerken');
+    }
+  };
+
   const handleCopyToMyList = () => {
     const ingredients = items.map(item => ({
       id: item.id,
@@ -119,8 +136,12 @@ export default function SharedShoppingList() {
                 </h3>
                 <div className="rounded-xl border bg-card divide-y">
                   {grouped[cat].map(item => (
-                    <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                      <div className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 ${
+                    <button
+                      key={item.id}
+                      onClick={() => toggleItem(item.id)}
+                      className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-secondary/50 transition-colors"
+                    >
+                      <div className={`h-5 w-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
                         item.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border'
                       }`}>
                         {item.checked && <Check className="h-3 w-3" />}
@@ -131,7 +152,7 @@ export default function SharedShoppingList() {
                       <span className="text-sm text-muted-foreground">
                         {item.amount} {item.unit}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </section>

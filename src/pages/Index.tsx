@@ -1,15 +1,24 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import RecipeCard from '@/components/RecipeCard';
 import FilterModal from '@/components/FilterModal';
 import { useApp } from '@/context/AppContext';
 import { useScrollRestore } from '@/hooks/useScrollRestore';
+import { Button } from '@/components/ui/button';
+
+const PAGE_SIZE = 24;
 
 export default function Index() {
   const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters, recipes, recipesLoading } = useApp();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useScrollRestore('home');
+
+  // Reset pagination when filters/search change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search, filters]);
 
   const filtered = useMemo(() => {
     let list = recipes;
@@ -43,6 +52,9 @@ export default function Index() {
     return list;
   }, [search, filters, recipes]);
 
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar searchQuery={search} onSearchChange={setSearch} onOpenFilters={() => setFiltersOpen(true)} />
@@ -56,11 +68,26 @@ export default function Index() {
             Geen recepten gevonden. Probeer andere zoektermen of filters.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {filtered.map(r => (
-              <RecipeCard key={r.id} recipe={r} />
-            ))}
-          </div>
+          <>
+            <p className="text-sm text-muted-foreground mb-4">
+              {filtered.length} {filtered.length === 1 ? 'recept' : 'recepten'} gevonden
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {visible.map(r => (
+                <RecipeCard key={r.id} recipe={r} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                >
+                  Meer laden
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

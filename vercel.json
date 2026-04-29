@@ -2,6 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/recept/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|SkypeUriPreview|Pinterest|redditbot|Applebot|Googlebot|bingbot|DuckDuckBot|YandexBot|Baiduspider|embedly|vkShare|W3C_Validator|Iframely|nuzzel|outbrain|quora|flipboard|tumblr|bitlybot|mattermost|node-fetch|axios|curl|wget|HeadlessChrome|Chrome-Lighthouse|prerender).*"
+        }
+      ],
+      "destination": "/api/og/recept/:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

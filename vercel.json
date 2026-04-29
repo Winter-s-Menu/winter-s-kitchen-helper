@@ -1,18 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
   "functions": {
     "api/og/recept/[slug].ts": {
       "includeFiles": "dist/**"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/recept/:slug",
-      "destination": "/api/og/recept/:slug"
+      "src": "/recept/([^/]+?)/?",
+      "dest": "/api/og/recept/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

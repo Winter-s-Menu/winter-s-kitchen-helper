@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share2 } from 'lucide-react';
+import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share2, X } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -36,7 +36,71 @@ export default function RecipeDetail() {
   const [showNote, setShowNote] = useState(false);
   const [noteText, setNoteText] = useState('');
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  // Update document metadata for the current recipe (client-side; crawlers
+  // are served pre-rendered HTML by /api/og/recept/[slug]).
+  useEffect(() => {
+    if (!recipe) return;
+    const siteName = "Winter's Menu";
+    const fullTitle = `${recipe.title} — ${siteName}`;
+    const sentences = (recipe.description || '').match(/[^.!?]+[.!?]+/g);
+    const shortDesc = sentences && sentences.length
+      ? sentences.slice(0, 2).join('').trim()
+      : (recipe.description || 'Ontdek recepten, schaal ingrediënten en maak je boodschappenlijst.');
+    const url = `${window.location.origin}/recept/${recipe.id}`;
+    const image = recipe.imageUrl || `${window.location.origin}/tab_logo.png`;
+
+    const prevTitle = document.title;
+    document.title = fullTitle;
+
+    const setMeta = (selector: string, attr: string, key: string, content: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+      return el;
+    };
+
+    setMeta('meta[name="description"]', 'name', 'description', shortDesc);
+    setMeta('meta[property="og:type"]', 'property', 'og:type', 'article');
+    setMeta('meta[property="og:title"]', 'property', 'og:title', fullTitle);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', shortDesc);
+    setMeta('meta[property="og:image"]', 'property', 'og:image', image);
+    setMeta('meta[property="og:url"]', 'property', 'og:url', url);
+    setMeta('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image');
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', fullTitle);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', shortDesc);
+    setMeta('meta[name="twitter:image"]', 'name', 'twitter:image', image);
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', url);
+
+    return () => { document.title = prevTitle; };
+  }, [recipe]);
+
+  // Close lightbox with Escape key
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxOpen(false); };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxOpen]);
 
   if (recipesLoading) {
     return (
@@ -118,14 +182,19 @@ export default function RecipeDetail() {
       {/* Hero image or gradient */}
       <div className="relative">
         {recipe.imageUrl ? (
-          <div className="w-full h-48 sm:h-64 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            className="block w-full h-48 sm:h-64 overflow-hidden cursor-zoom-in focus:outline-none"
+            aria-label="Vergroot afbeelding"
+          >
             <img
               src={recipe.imageUrl}
               alt={recipe.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover hover:scale-[1.02] transition-transform"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-          </div>
+          </button>
         ) : (
           <div className={`${gradientClass[recipe.type]} h-48 sm:h-64 flex items-center justify-center text-6xl`}>
             <span className="opacity-50">{emoji[recipe.type]}</span>
@@ -270,6 +339,32 @@ export default function RecipeDetail() {
           </p>
         )}
       </main>
+
+      {/* Image lightbox */}
+      {lightboxOpen && recipe.imageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vergrote afbeelding"
+          onClick={() => setLightboxOpen(false)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            aria-label="Sluiten"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 }

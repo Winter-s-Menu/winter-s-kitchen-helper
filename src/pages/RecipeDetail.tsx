@@ -182,14 +182,19 @@ export default function RecipeDetail() {
       {/* Hero image or gradient */}
       <div className="relative">
         {recipe.imageUrl ? (
-          <div className="w-full h-48 sm:h-64 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            className="block w-full h-48 sm:h-64 overflow-hidden cursor-zoom-in focus:outline-none"
+            aria-label="Vergroot afbeelding"
+          >
             <img
               src={recipe.imageUrl}
               alt={recipe.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover hover:scale-[1.02] transition-transform"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-          </div>
+          </button>
         ) : (
           <div className={`${gradientClass[recipe.type]} h-48 sm:h-64 flex items-center justify-center text-6xl`}>
             <span className="opacity-50">{emoji[recipe.type]}</span>

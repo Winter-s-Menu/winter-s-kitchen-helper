@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share2 } from 'lucide-react';
+import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share2, X } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -339,6 +339,32 @@ export default function RecipeDetail() {
           </p>
         )}
       </main>
+
+      {/* Image lightbox */}
+      {lightboxOpen && recipe.imageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vergrote afbeelding"
+          onClick={() => setLightboxOpen(false)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            aria-label="Sluiten"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 }

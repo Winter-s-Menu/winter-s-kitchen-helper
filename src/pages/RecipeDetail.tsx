@@ -36,7 +36,71 @@ export default function RecipeDetail() {
   const [showNote, setShowNote] = useState(false);
   const [noteText, setNoteText] = useState('');
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  // Update document metadata for the current recipe (client-side; crawlers
+  // are served pre-rendered HTML by /api/og/recept/[slug]).
+  useEffect(() => {
+    if (!recipe) return;
+    const siteName = "Winter's Menu";
+    const fullTitle = `${recipe.title} — ${siteName}`;
+    const sentences = (recipe.description || '').match(/[^.!?]+[.!?]+/g);
+    const shortDesc = sentences && sentences.length
+      ? sentences.slice(0, 2).join('').trim()
+      : (recipe.description || 'Ontdek recepten, schaal ingrediënten en maak je boodschappenlijst.');
+    const url = `${window.location.origin}/recept/${recipe.id}`;
+    const image = recipe.imageUrl || `${window.location.origin}/tab_logo.png`;
+
+    const prevTitle = document.title;
+    document.title = fullTitle;
+
+    const setMeta = (selector: string, attr: string, key: string, content: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+      return el;
+    };
+
+    setMeta('meta[name="description"]', 'name', 'description', shortDesc);
+    setMeta('meta[property="og:type"]', 'property', 'og:type', 'article');
+    setMeta('meta[property="og:title"]', 'property', 'og:title', fullTitle);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', shortDesc);
+    setMeta('meta[property="og:image"]', 'property', 'og:image', image);
+    setMeta('meta[property="og:url"]', 'property', 'og:url', url);
+    setMeta('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image');
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', fullTitle);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', shortDesc);
+    setMeta('meta[name="twitter:image"]', 'name', 'twitter:image', image);
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', url);
+
+    return () => { document.title = prevTitle; };
+  }, [recipe]);
+
+  // Close lightbox with Escape key
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxOpen(false); };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxOpen]);
 
   if (recipesLoading) {
     return (

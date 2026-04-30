@@ -6,17 +6,14 @@
       "includeFiles": "dist/**"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/recept/([^/]+?)/?",
-      "dest": "/api/og/recept/$1"
+      "source": "/recept/:slug",
+      "destination": "/api/og/recept/:slug"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

@@ -12,7 +12,7 @@
       "destination": "/api/og/recept/:slug"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/:path((?!api/).*)",
       "destination": "/index.html"
     }
   ]

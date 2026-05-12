@@ -5,6 +5,17 @@ import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { CATEGORY_LABELS, type IngredientCategory } from '@/types/recipe';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 function AmountControl({ amount, unit, onChange }: { amount: number; unit: string; onChange: (v: number) => void }) {
   const [draft, setDraft] = useState<string>(String(amount));

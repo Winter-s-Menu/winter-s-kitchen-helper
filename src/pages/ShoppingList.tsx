@@ -67,6 +67,7 @@ function AmountControl({ amount, unit, onChange }: { amount: number; unit: strin
 export default function ShoppingList() {
   const { shoppingList, toggleShoppingItem, updateShoppingItemAmount, removeShoppingItem, clearShoppingList, shareToken } = useApp();
   const { user } = useAuth();
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
 
   const grouped = shoppingList.reduce<Record<string, typeof shoppingList>>((acc, item) => {
     const cat = item.category;

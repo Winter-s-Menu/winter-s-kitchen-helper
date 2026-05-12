@@ -191,6 +191,33 @@ export default function ShoppingList() {
                 </section>
               ))}
             </div>
+
+            <div className="pt-8 pb-2 flex justify-center">
+              <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <button className="text-sm text-muted-foreground hover:text-destructive transition-colors underline-offset-4 hover:underline">
+                    Verwijder alles
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Boodschappenlijst wissen</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Weet je zeker dat je alle items uit je boodschappenlijst wilt verwijderen?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => clearShoppingList()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Verwijder alles
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </>
         )}
       </main>

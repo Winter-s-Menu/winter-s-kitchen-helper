@@ -30,7 +30,7 @@ export default function Navbar({ searchQuery, onSearchChange, onOpenFilters }: N
               type="text"
               value={searchQuery ?? ''}
               onChange={e => onSearchChange(e.target.value)}
-              placeholder="Zoek recepten of ingrediënten…"
+              placeholder="Zoek recepten…"
               className="w-full rounded-lg bg-secondary pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
             />
           </div>

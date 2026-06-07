@@ -5,6 +5,7 @@ import FilterModal from '@/components/FilterModal';
 import { useApp } from '@/context/AppContext';
 import { useScrollRestore } from '@/hooks/useScrollRestore';
 import { Button } from '@/components/ui/button';
+import { getDiscoveryOrder } from '@/lib/discoveryOrder';
 
 const PAGE_SIZE = 24;
 
@@ -23,6 +24,13 @@ export default function Index() {
   const filtered = useMemo(() => {
     let list = recipes;
     const q = search.toLowerCase().trim();
+
+    const hasSearch = q.length > 0;
+    const hasFilters =
+      filters.types.length > 0 ||
+      filters.excludeAllergens.length > 0 ||
+      filters.prepTime !== '' ||
+      filters.course !== '';
 
     if (q) {
       list = list.filter(
@@ -48,6 +56,11 @@ export default function Index() {
     else if (filters.prepTime === '60+') list = list.filter(r => r.prepTimeMinutes > 60);
 
     if (filters.course) list = list.filter(r => r.course === filters.course);
+
+    if (!hasSearch && !hasFilters && list.length > 0) {
+      const order = getDiscoveryOrder(list.map(r => ({ id: r.id, createdAt: r.createdAt })));
+      list = [...list].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    }
 
     return list;
   }, [search, filters, recipes]);

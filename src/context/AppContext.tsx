@@ -62,7 +62,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase
       .from('recipes')
       .select(`
-        id, slug, title, description, image_url,
+        id, slug, title, description, image_url, created_at,
         prep_time_minutes, type, course, allergens, tags,
         base_servings, steps,
         recipe_ingredients (
@@ -90,6 +90,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       tags: r.tags ?? [],
       baseServings: r.base_servings,
       steps: r.steps ?? [],
+      createdAt: r.created_at ?? null,
       ingredients: (r.recipe_ingredients ?? [])
         .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         .map((ri: any) => ({

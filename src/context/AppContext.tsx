@@ -393,6 +393,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         searchQuery, setSearchQuery, filters, setFilters,
         shareToken,
         profile, updateProfile,
+        ratings, refreshRatings,
       }}
     >
       {children}

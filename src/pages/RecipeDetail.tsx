@@ -335,10 +335,12 @@ export default function RecipeDetail() {
 
         {/* Allergens */}
         {recipe.allergens.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-8">
+          <p className="text-xs text-muted-foreground mb-6">
             Allergenen: {recipe.allergens.join(', ')}
           </p>
         )}
+
+        <RecipeReviews recipeId={recipe.id} />
       </main>
 
       {/* Image lightbox */}

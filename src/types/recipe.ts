@@ -23,6 +23,7 @@ export interface Recipe {
   baseServings: number;
   ingredients: RecipeIngredient[];
   steps: string[];
+  createdAt?: string | null;
 }
 
 export interface ShoppingListItem {

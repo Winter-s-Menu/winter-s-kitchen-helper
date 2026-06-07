@@ -10,7 +10,7 @@ import { getDiscoveryOrder } from '@/lib/discoveryOrder';
 const PAGE_SIZE = 24;
 
 export default function Index() {
-  const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters, recipes, recipesLoading } = useApp();
+  const { searchQuery: search, setSearchQuery: setSearch, filters, setFilters, recipes, recipesLoading, ratings } = useApp();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -30,7 +30,8 @@ export default function Index() {
       filters.types.length > 0 ||
       filters.excludeAllergens.length > 0 ||
       filters.prepTime !== '' ||
-      filters.course !== '';
+      filters.course !== '' ||
+      filters.minRating > 0;
 
     if (q) {
       list = list.filter(
@@ -57,13 +58,30 @@ export default function Index() {
 
     if (filters.course) list = list.filter(r => r.course === filters.course);
 
+    if (filters.minRating > 0) {
+      list = list.filter(r => {
+        const agg = ratings.get(r.id);
+        return !!agg && agg.count > 0 && agg.avg >= filters.minRating;
+      });
+    }
+
     if (!hasSearch && !hasFilters && list.length > 0) {
-      const order = getDiscoveryOrder(list.map(r => ({ id: r.id, createdAt: r.createdAt })));
+      const order = getDiscoveryOrder(
+        list.map(r => {
+          const agg = ratings.get(r.id);
+          return {
+            id: r.id,
+            createdAt: r.createdAt,
+            avgRating: agg?.avg,
+            reviewCount: agg?.count,
+          };
+        })
+      );
       list = [...list].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     }
 
     return list;
-  }, [search, filters, recipes]);
+  }, [search, filters, recipes, ratings]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;

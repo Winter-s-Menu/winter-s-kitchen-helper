@@ -24,6 +24,8 @@ export interface Recipe {
   ingredients: RecipeIngredient[];
   steps: string[];
   createdAt?: string | null;
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface ShoppingListItem {

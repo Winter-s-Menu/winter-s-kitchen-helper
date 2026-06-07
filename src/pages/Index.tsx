@@ -5,6 +5,7 @@ import FilterModal from '@/components/FilterModal';
 import { useApp } from '@/context/AppContext';
 import { useScrollRestore } from '@/hooks/useScrollRestore';
 import { Button } from '@/components/ui/button';
+import { getDiscoveryOrder } from '@/lib/discoveryOrder';
 
 const PAGE_SIZE = 24;
 

@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import type { ShoppingListItem, Note, RecipeIngredient, Recipe } from '@/types/recipe';
 import type { Filters } from '@/components/FilterModal';
 import { emptyFilters } from '@/components/FilterModal';
+import { fetchAllRatingAggregates, type RatingAggregate } from '@/lib/reviews';
 
 export interface UserProfile {
   name: string;
@@ -34,6 +35,8 @@ interface AppContextType {
   shareToken: string | null;
   profile: UserProfile;
   updateProfile: (p: Partial<UserProfile>) => Promise<void>;
+  ratings: Map<string, RatingAggregate>;
+  refreshRatings: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -50,11 +53,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [shoppingListId, setShoppingListId] = useState<string | null>(null);
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({ name: '', allergies: [] });
+  const [ratings, setRatings] = useState<Map<string, RatingAggregate>>(new Map());
   const profileLoadedRef = useRef(false);
 
   // ── Load recipes from Supabase (public, no auth needed) ──
   useEffect(() => {
     loadRecipes();
+    refreshRatings();
+  }, []);
+
+  const refreshRatings = useCallback(async () => {
+    try {
+      const map = await fetchAllRatingAggregates();
+      setRatings(map);
+    } catch (e) {
+      console.error('Failed to load ratings:', e);
+    }
   }, []);
 
   async function loadRecipes() {
@@ -379,6 +393,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         searchQuery, setSearchQuery, filters, setFilters,
         shareToken,
         profile, updateProfile,
+        ratings, refreshRatings,
       }}
     >
       {children}

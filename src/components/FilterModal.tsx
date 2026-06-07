@@ -7,9 +7,10 @@ export interface Filters {
   excludeAllergens: string[];
   prepTime: '' | '<30' | '30-60' | '60+';
   course: Course | '';
+  minRating: 0 | 2 | 3 | 4;
 }
 
-export const emptyFilters: Filters = { types: [], excludeAllergens: [], prepTime: '', course: '' };
+export const emptyFilters: Filters = { types: [], excludeAllergens: [], prepTime: '', course: '', minRating: 0 };
 
 interface Props {
   open: boolean;
@@ -54,11 +55,15 @@ export default function FilterModal({ open, onOpenChange, filters, onChange }: P
   const setCourse = (v: Course) =>
     onChange({ ...filters, course: filters.course === v ? '' : v });
 
+  const setMinRating = (v: Filters['minRating']) =>
+    onChange({ ...filters, minRating: filters.minRating === v ? 0 : v });
+
   const hasFilters =
     filters.types.length > 0 ||
     filters.excludeAllergens.length > 0 ||
     filters.prepTime !== '' ||
-    filters.course !== '';
+    filters.course !== '' ||
+    filters.minRating > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,6 +120,19 @@ export default function FilterModal({ open, onOpenChange, filters, onChange }: P
                   {label}
                 </Toggle>
               ))}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Beoordeling</h4>
+            <div className="flex flex-wrap gap-2">
+              {([[4, '4★ en hoger'], [3, '3★ en hoger'], [2, '2★ en hoger']] as const).map(
+                ([k, label]) => (
+                  <Toggle key={k} active={filters.minRating === k} onClick={() => setMinRating(k)}>
+                    {label}
+                  </Toggle>
+                )
+              )}
             </div>
           </section>
 

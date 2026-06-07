@@ -4,6 +4,7 @@ import { ChevronLeft, Heart, ShoppingCart, StickyNote, Minus, Plus, Clock, Share
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import RecipeReviews from '@/components/RecipeReviews';
 
 const gradientClass: Record<string, string> = {
   vlees: 'recipe-gradient-vlees',
@@ -334,10 +335,12 @@ export default function RecipeDetail() {
 
         {/* Allergens */}
         {recipe.allergens.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-8">
+          <p className="text-xs text-muted-foreground mb-6">
             Allergenen: {recipe.allergens.join(', ')}
           </p>
         )}
+
+        <RecipeReviews recipeId={recipe.id} />
       </main>
 
       {/* Image lightbox */}

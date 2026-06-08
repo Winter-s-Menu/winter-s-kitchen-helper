@@ -4,7 +4,7 @@ export interface RecipeReview {
   id: string;
   recipeId: string;
   userId: string;
-  userName?: string | null;
+  displayName?: string | null;
   rating: number;
   reviewText: string;
   createdAt: string;
@@ -36,23 +36,15 @@ export async function fetchAllRatingAggregates(): Promise<Map<string, RatingAggr
 }
 
 export async function fetchReviewsForRecipe(recipeId: string): Promise<RecipeReview[]> {
-  const { data, error } = await supabase
-    .from('recipe_reviews')
-    .select('id, recipe_id, user_id, rating, review_text, created_at, updated_at, profiles:profiles!recipe_reviews_user_id_fkey(name)')
-    .eq('recipe_id', recipeId)
-    .order('created_at', { ascending: false });
+  // Preferred: RPC that joins to profiles + auth.users for author display name.
+  const { data, error } = await supabase.rpc('get_recipe_reviews', { p_recipe_id: recipeId });
 
-  if (error || !data) {
-    // Fallback without profile join (if FK relationship not exposed)
-    const { data: plain } = await supabase
-      .from('recipe_reviews')
-      .select('id, recipe_id, user_id, rating, review_text, created_at, updated_at')
-      .eq('recipe_id', recipeId)
-      .order('created_at', { ascending: false });
-    return (plain ?? []).map((r: any) => ({
+  if (!error && Array.isArray(data)) {
+    return (data as any[]).map(r => ({
       id: r.id,
-      recipeId: r.recipe_id,
+      recipeId: recipeId,
       userId: r.user_id,
+      displayName: r.display_name ?? null,
       rating: r.rating,
       reviewText: r.review_text ?? '',
       createdAt: r.created_at,
@@ -60,11 +52,17 @@ export async function fetchReviewsForRecipe(recipeId: string): Promise<RecipeRev
     }));
   }
 
-  return (data as any[]).map(r => ({
+  // Fallback: plain select (author name will be unavailable).
+  const { data: plain } = await supabase
+    .from('recipe_reviews')
+    .select('id, recipe_id, user_id, rating, review_text, created_at, updated_at')
+    .eq('recipe_id', recipeId)
+    .order('created_at', { ascending: false });
+  return (plain ?? []).map((r: any) => ({
     id: r.id,
     recipeId: r.recipe_id,
     userId: r.user_id,
-    userName: r.profiles?.name ?? null,
+    displayName: null,
     rating: r.rating,
     reviewText: r.review_text ?? '',
     createdAt: r.created_at,

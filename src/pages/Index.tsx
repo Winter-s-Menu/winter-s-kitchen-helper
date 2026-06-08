@@ -31,7 +31,7 @@ export default function Index() {
       filters.excludeAllergens.length > 0 ||
       filters.prepTime !== '' ||
       filters.course !== '' ||
-      filters.minRating > 0;
+      filters.ratings.length > 0;
 
     if (q) {
       list = list.filter(
@@ -58,10 +58,12 @@ export default function Index() {
 
     if (filters.course) list = list.filter(r => r.course === filters.course);
 
-    if (filters.minRating > 0) {
+    if (filters.ratings.length > 0) {
       list = list.filter(r => {
         const agg = ratings.get(r.id);
-        return !!agg && agg.count > 0 && agg.avg >= filters.minRating;
+        if (!agg || agg.count === 0) return false;
+        const rounded = Math.round(agg.avg);
+        return filters.ratings.includes(rounded as 1 | 2 | 3 | 4 | 5);
       });
     }
 

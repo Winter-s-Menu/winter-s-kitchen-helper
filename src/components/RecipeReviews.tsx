@@ -26,7 +26,7 @@ function StarRow({
   size?: 'sm' | 'md' | 'lg';
   interactive?: boolean;
 }) {
-  const px = size === 'lg' ? 'h-7 w-7' : size === 'sm' ? 'h-3.5 w-3.5' : 'h-5 w-5';
+  const px = size === 'lg' ? 'h-6 w-6' : size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(n => {
@@ -59,6 +59,13 @@ function formatDate(iso: string) {
   } catch {
     return '';
   }
+}
+
+function displayNameFor(r: RecipeReview, ownEmail?: string | null, isOwn?: boolean): string {
+  const name = (r.displayName ?? '').trim();
+  if (name) return name;
+  if (isOwn && ownEmail) return ownEmail;
+  return 'Anoniem';
 }
 
 export default function RecipeReviews({ recipeId }: Props) {
@@ -152,62 +159,25 @@ export default function RecipeReviews({ recipeId }: Props) {
         )}
       </div>
 
-      {/* Form */}
-      <div className="rounded-lg border bg-background/40 p-4 mb-5">
-        <p className="text-sm font-medium mb-2">
-          {ownReview ? 'Bewerk je review' : 'Plaats een review'}
-        </p>
-        <div className="mb-3">
-          <StarRow value={rating} onChange={setRating} size="lg" interactive />
-        </div>
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Hoe vond je dit recept?"
-          maxLength={1000}
-          className="w-full bg-transparent resize-none outline-none text-sm min-h-[70px] border-b border-border focus:border-primary transition-colors pb-2"
-        />
-        <div className="flex items-center justify-between mt-3">
-          {ownReview ? (
-            <button
-              onClick={handleDelete}
-              disabled={submitting}
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" /> Verwijderen
-            </button>
-          ) : (
-            <span />
-          )}
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || rating < 1}
-            className="rounded-full bg-primary text-primary-foreground text-sm font-medium px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {ownReview ? 'Bijwerken' : 'Plaatsen'}
-          </button>
-        </div>
-      </div>
-
-      {/* List */}
+      {/* Other users' reviews (and own review for reference, marked) */}
       {loading ? (
         <p className="text-sm text-muted-foreground">Laden…</p>
       ) : count === 0 ? (
         <p className="text-sm text-muted-foreground">Nog geen reviews. Wees de eerste!</p>
-      ) : (
+      ) : otherReviews.length === 0 && !ownReview ? null : (
         <ul className="space-y-4">
-          {[...(ownReview ? [ownReview] : []), ...otherReviews].map(r => (
+          {otherReviews.map(r => (
             <li key={r.id} className="border-b border-border/50 last:border-0 pb-3 last:pb-0">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <StarRow value={r.rating} size="sm" />
-                  {user && r.userId === user.id && (
-                    <span className="text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground">
-                      Jouw review
-                    </span>
-                  )}
+                  <span className="text-xs text-muted-foreground truncate">
+                    {displayNameFor(r)}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground">{formatDate(r.updatedAt || r.createdAt)}</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {formatDate(r.updatedAt || r.createdAt)}
+                </span>
               </div>
               {r.reviewText && (
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{r.reviewText}</p>
@@ -216,6 +186,48 @@ export default function RecipeReviews({ recipeId }: Props) {
           ))}
         </ul>
       )}
+
+      {/* Own review section — compact and subtle, below other reviews */}
+      <div className="mt-6 pt-4 border-t border-border/60">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {ownReview ? 'Jouw review' : 'Plaats een review'}
+          </p>
+          <StarRow value={rating} onChange={setRating} size="md" interactive />
+        </div>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Hoe vond je dit recept? (optioneel)"
+          maxLength={1000}
+          className="w-full bg-transparent resize-none outline-none text-sm min-h-[44px] border-b border-border focus:border-primary transition-colors pb-1.5"
+        />
+        <div className="flex items-center justify-between mt-2">
+          {ownReview ? (
+            <button
+              onClick={handleDelete}
+              disabled={submitting}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Verwijderen
+            </button>
+          ) : (
+            <span />
+          )}
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || rating < 1}
+            className="text-xs font-medium text-primary hover:underline disabled:opacity-50 disabled:no-underline disabled:text-muted-foreground"
+          >
+            {ownReview ? 'Bijwerken' : 'Plaatsen'}
+          </button>
+        </div>
+        {ownReview && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Zichtbaar als: {displayNameFor(ownReview, user?.email, true)}
+          </p>
+        )}
+      </div>
     </section>
   );
 }

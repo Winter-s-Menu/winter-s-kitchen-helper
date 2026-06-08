@@ -1,16 +1,25 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RECIPE_TYPE_LABELS, COURSE_LABELS, ALLERGEN_OPTIONS } from '@/types/recipe';
 import type { RecipeType, Course } from '@/types/recipe';
+import { Star } from 'lucide-react';
+
+export type StarValue = 1 | 2 | 3 | 4 | 5;
 
 export interface Filters {
   types: RecipeType[];
   excludeAllergens: string[];
   prepTime: '' | '<30' | '30-60' | '60+';
   course: Course | '';
-  minRating: 0 | 2 | 3 | 4;
+  ratings: StarValue[];
 }
 
-export const emptyFilters: Filters = { types: [], excludeAllergens: [], prepTime: '', course: '', minRating: 0 };
+export const emptyFilters: Filters = {
+  types: [],
+  excludeAllergens: [],
+  prepTime: '',
+  course: '',
+  ratings: [],
+};
 
 interface Props {
   open: boolean;
@@ -55,15 +64,19 @@ export default function FilterModal({ open, onOpenChange, filters, onChange }: P
   const setCourse = (v: Course) =>
     onChange({ ...filters, course: filters.course === v ? '' : v });
 
-  const setMinRating = (v: Filters['minRating']) =>
-    onChange({ ...filters, minRating: filters.minRating === v ? 0 : v });
+  const toggleRating = (v: StarValue) => {
+    const ratings = filters.ratings.includes(v)
+      ? filters.ratings.filter(x => x !== v)
+      : [...filters.ratings, v];
+    onChange({ ...filters, ratings });
+  };
 
   const hasFilters =
     filters.types.length > 0 ||
     filters.excludeAllergens.length > 0 ||
     filters.prepTime !== '' ||
     filters.course !== '' ||
-    filters.minRating > 0;
+    filters.ratings.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,14 +138,17 @@ export default function FilterModal({ open, onOpenChange, filters, onChange }: P
 
           <section>
             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Beoordeling</h4>
+            <p className="text-xs text-muted-foreground/80 mb-2">
+              Filtert op de afgeronde gemiddelde score. Combineer meerdere waardes.
+            </p>
             <div className="flex flex-wrap gap-2">
-              {([[4, '4★ en hoger'], [3, '3★ en hoger'], [2, '2★ en hoger']] as const).map(
-                ([k, label]) => (
-                  <Toggle key={k} active={filters.minRating === k} onClick={() => setMinRating(k)}>
-                    {label}
-                  </Toggle>
-                )
-              )}
+              {([1, 2, 3, 4, 5] as StarValue[]).map(n => (
+                <Toggle key={n} active={filters.ratings.includes(n)} onClick={() => toggleRating(n)}>
+                  <span className="inline-flex items-center gap-1">
+                    {n} <Star className="h-3.5 w-3.5 fill-current" />
+                  </span>
+                </Toggle>
+              ))}
             </div>
           </section>
 
